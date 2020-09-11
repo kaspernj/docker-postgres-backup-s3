@@ -1,8 +1,4 @@
-FROM alpine:3.9
-LABEL maintainer="Johannes Schickling <schickling.j@gmail.com>"
-
-ADD install.sh install.sh
-RUN sh install.sh && rm install.sh
+FROM postgres:10-
 
 ENV POSTGRES_DATABASE **None**
 ENV POSTGRES_HOST **None**
@@ -18,6 +14,23 @@ ENV S3_PATH 'backup'
 ENV S3_ENDPOINT **None**
 ENV S3_S3V4 no
 ENV SCHEDULE **None**
+
+RUN apk update && \
+  apk add postgresql && \
+
+  # install s3 tools
+  apk add python py2-pip && \
+  pip install awscli && \
+  apk del py2-pip && \
+
+  # install go-cron
+  apk add curl && \
+  curl -L --insecure https://github.com/odise/go-cron/releases/download/v0.0.6/go-cron-linux.gz | zcat > /usr/local/bin/go-cron && \
+  chmod u+x /usr/local/bin/go-cron && \
+  apk del curl && \
+
+  # cleanup
+  rm -rf /var/cache/apk/*
 
 ADD run.sh run.sh
 ADD backup.sh backup.sh
